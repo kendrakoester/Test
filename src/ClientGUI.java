@@ -7,7 +7,10 @@ import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -19,14 +22,17 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 
+import blackjack.message.LoginMessage;
+import blackjack.message.MessageFactory;
+
 public class ClientGUI {
 	private static final long serialVersionUID = 1L;
 
 	public static String username;
-	private int port = 8090;
+	private int port = 8989;
 	private Socket sock;
-	private BufferedReader reader;
-	private PrintWriter writer;
+	private Reader reader;
+	private Writer writer;
 	private Boolean isConnected = false;
 
 	private JFrame frame;
@@ -48,7 +54,7 @@ public class ClientGUI {
 
 	}
 
-	public void runChatGUI() {
+	public void runClientGUI() {
 
 		frame = new JFrame();
 		frame.setSize(460, 400);
@@ -80,7 +86,7 @@ public class ClientGUI {
 		connectButton.addActionListener(new ActionListener() {
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public actionPerformed(ActionEvent e) {
 				if (isConnected == false) {
 					username = nameTextArea.getText();
 					nameTextArea.setEditable(false);
@@ -88,12 +94,15 @@ public class ClientGUI {
 					try {
 						// this is what checks for an existing server
 						sock = new Socket(InetAddress.getByName(ipTextArea.getText()), port);
+						ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 						//InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
-						ObjectInputStream input = new ObjectInputStream(sock.getInputStream());
+						ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 						//reader = new BufferedReader(streamreader);
-						reader = (BufferedReader) input.readObject();
-						writer = new PrintWriter(sock.getOutputStream());
-						writer.println(username);
+						reader = (Reader) ois.readObject();
+						//writer = new PrintWriter(sock.getOutputStream());
+						//MessageFactory.getLoginMessage(username)
+						writer = (Writer) oos.writeObject(MessageFactory.getLoginMessage(username));
+						//((PrintWriter) writer).println(username);
 						writer.flush();
 						isConnected = true;
 
@@ -105,7 +114,7 @@ public class ClientGUI {
 					Thread incomingReader = new Thread(new IncomingReader());
 					incomingReader.start();
 				} else if (isConnected == true) {
-					chatTextArea.append("dumbACK You are already connected. \n");
+					chatTextArea.append("You are already connected. \n");
 				}
 
 			}
@@ -126,27 +135,10 @@ public class ClientGUI {
 		replyScrollPane = new JScrollPane(replyTextArea);
 		replyScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		replyScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		replyTextArea.addKeyListener(new KeyListener() {
-
-			@Override
-			public void keyTyped(KeyEvent e) {
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-
-				if ((e.getKeyCode() == KeyEvent.VK_ENTER && (e.isMetaDown()))) {
-					sendActionPerformed();
-				} else {
-
-				}
-
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-			}
-		});
+//		replyTextArea.addKeyListener(new KeyListener() {
+//
+//			
+//		});
 
 		sendButton = new JButton();
 		sendButton.setText("Send");
@@ -211,7 +203,7 @@ public class ClientGUI {
 	}
 
 	public void disconnect() {
-		String bye = (username + ": :Disconnect");
+		String bye = (username + ":Disconnect");
 		try {
 			writer.println(bye);
 			writer.flush();

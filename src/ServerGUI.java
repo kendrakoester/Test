@@ -22,7 +22,7 @@ public class ServerGUI extends JFrame
 	private JTextArea ServerTextArea;
 	private JButton startButton;
 	private JButton stopButton;
-	private int port = 8090;
+	private int port = 8989;
 
 	ArrayList<PrintWriter> clientOutputStreams;
 	ArrayList<String> onlineUsers;
@@ -42,7 +42,7 @@ public class ServerGUI extends JFrame
 				//reader = new BufferedReader(isReader);
 				reader = (BufferedReader) input.readObject();
 			} catch (Exception ex) {
-				ServerTextArea.append("Error beginning StreamReader. \n");
+				ServerTextArea.append("Error beginning ObjectInputStream. \n");
 			}
 
 		}
