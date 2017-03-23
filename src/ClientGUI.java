@@ -103,8 +103,10 @@ public class ClientGUI {
 						
 						//InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
 						ois = new ObjectInputStream(sock.getInputStream());
+						oos.flush();
 						//reader = new BufferedReader(streamreader);
 						ois.readObject();
+						oos.flush();
 						
 						oos.writeObject(MessageFactory.getLoginMessage(username));
 						//writer = new PrintWriter(sock.getOutputStream());
