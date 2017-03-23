@@ -49,6 +49,8 @@ public class ClientGUI {
 	private JTextArea nameTextArea;
 	private JLabel ipLabel;
 	private JLabel nameLabel;
+	private ObjectInputStream ois;
+	private ObjectOutputStream oos;
 
 	public ClientGUI() {
 
@@ -86,7 +88,7 @@ public class ClientGUI {
 		connectButton.addActionListener(new ActionListener() {
 
 			@Override
-			public actionPerformed(ActionEvent e) {
+			public void actionPerformed(ActionEvent e) {
 				if (isConnected == false) {
 					username = nameTextArea.getText();
 					nameTextArea.setEditable(false);
@@ -94,16 +96,23 @@ public class ClientGUI {
 					try {
 						// this is what checks for an existing server
 						sock = new Socket(InetAddress.getByName(ipTextArea.getText()), port);
-						ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+						
+						oos = new ObjectOutputStream(sock.getOutputStream());
+						
+						oos.writeObject(MessageFactory.getLoginMessage(username));
+						
 						//InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
-						ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+						ois = new ObjectInputStream(sock.getInputStream());
 						//reader = new BufferedReader(streamreader);
-						reader = (Reader) ois.readObject();
+						ois.readObject();
+						
+						oos.writeObject(MessageFactory.getLoginMessage(username));
 						//writer = new PrintWriter(sock.getOutputStream());
-						//MessageFactory.getLoginMessage(username)
-						writer = (Writer) oos.writeObject(MessageFactory.getLoginMessage(username));
+						
+						//writer = (Writer) oos.writeObject(new LoginMessage(MessageFactory.getLoginMessage(username)));
 						//((PrintWriter) writer).println(username);
-						writer.flush();
+						oos.flush();
+						
 						isConnected = true;
 
 					} catch (Exception ex) {
@@ -173,7 +182,7 @@ public class ClientGUI {
 
 		} else {
 			try {
-				writer.println(replyTextArea.getText());
+				((PrintWriter) writer).println(replyTextArea.getText());
 				writer.flush();
 			} catch (Exception ex) {
 				chatTextArea.append("Please enter IP and UserName to connect. \n");
@@ -192,7 +201,8 @@ public class ClientGUI {
 
 			try {
 				while (sock.isConnected() && !sock.isClosed()) {
-					stream = reader.readLine();
+					//stream = reader.read();
+					stream = (String) ois.readObject();
 					System.out.println(stream);
 					chatTextArea.append(stream + "\n");
 
@@ -205,7 +215,7 @@ public class ClientGUI {
 	public void disconnect() {
 		String bye = (username + ":Disconnect");
 		try {
-			writer.println(bye);
+			((PrintWriter) writer).println(bye);
 			writer.flush();
 		} catch (Exception e) {
 			chatTextArea.append("Could not send Disconnect message.\n");
