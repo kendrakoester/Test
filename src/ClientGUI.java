@@ -23,6 +23,7 @@ import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 
 import blackjack.message.LoginMessage;
+import blackjack.message.Message;
 import blackjack.message.MessageFactory;
 
 public class ClientGUI {
@@ -92,10 +93,11 @@ public class ClientGUI {
 				if (isConnected == false) {
 					username = nameTextArea.getText();
 					nameTextArea.setEditable(false);
+					String ip  = "34.208.31.178";
 
 					try {
 						// this is what checks for an existing server
-						sock = new Socket(InetAddress.getByName(ipTextArea.getText()), port);
+						sock = new Socket(ip, port);
 						
 						oos = new ObjectOutputStream(sock.getOutputStream());
 						
@@ -105,15 +107,12 @@ public class ClientGUI {
 						ois = new ObjectInputStream(sock.getInputStream());
 						oos.flush();
 						//reader = new BufferedReader(streamreader);
-						ois.readObject();
-						oos.flush();
 						
-						oos.writeObject(MessageFactory.getLoginMessage(username));
 						//writer = new PrintWriter(sock.getOutputStream());
 						
 						//writer = (Writer) oos.writeObject(new LoginMessage(MessageFactory.getLoginMessage(username)));
 						//((PrintWriter) writer).println(username);
-						oos.flush();
+						//oos.flush();
 						
 						isConnected = true;
 
@@ -122,6 +121,7 @@ public class ClientGUI {
 						ServerGUI server = new ServerGUI();
 						server.runServerWithGUI();
 					}
+					
 					Thread incomingReader = new Thread(new IncomingReader());
 					incomingReader.start();
 				} else if (isConnected == true) {
@@ -204,9 +204,11 @@ public class ClientGUI {
 			try {
 				while (sock.isConnected() && !sock.isClosed()) {
 					//stream = reader.read();
-					stream = (String) ois.readObject();
-					System.out.println(stream);
-					chatTextArea.append(stream + "\n");
+					//stream = (String) ois.readObject();
+					Message obj = (Message) ois.readObject();
+					//Message message = (Message) obj;
+					System.out.println(obj);
+					chatTextArea.append(obj + "\n");
 
 				}
 			} catch (Exception ex) {
