@@ -146,10 +146,6 @@ public class ClientGUI {
 		replyScrollPane = new JScrollPane(replyTextArea);
 		replyScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		replyScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-//		replyTextArea.addKeyListener(new KeyListener() {
-//
-//			
-//		});
 
 		sendButton = new JButton();
 		sendButton.setText("Send");
@@ -184,8 +180,10 @@ public class ClientGUI {
 
 		} else {
 			try {
-				((PrintWriter) writer).println(replyTextArea.getText());
-				writer.flush();
+				oos.writeObject(replyTextArea.getText());
+				oos.flush();
+				chatTextArea.setText(chatTextArea.getText() + replyTextArea.getText() + "\n");
+				
 			} catch (Exception ex) {
 				chatTextArea.append("Please enter IP and UserName to connect. \n");
 			}
@@ -199,16 +197,13 @@ public class ClientGUI {
 	public class IncomingReader implements Runnable {
 
 		public void run() {
-			String stream;
 
 			try {
 				while (sock.isConnected() && !sock.isClosed()) {
-					//stream = reader.read();
-					//stream = (String) ois.readObject();
+
 					Message obj = (Message) ois.readObject();
-					//Message message = (Message) obj;
-					System.out.println(obj);
-					chatTextArea.append(obj + "\n");
+					System.out.println(obj.getType());
+					chatTextArea.append(obj.getType() + "\n");
 
 				}
 			} catch (Exception ex) {
