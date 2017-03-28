@@ -4,14 +4,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.net.Socket;
 
 import javax.swing.JButton;
@@ -22,17 +18,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 
-import blackjack.message.LoginMessage;
 import blackjack.message.Message;
+import blackjack.message.Message.MessageType;
 import blackjack.message.MessageFactory;
 
 public class ClientGUI {
-	private static final long serialVersionUID = 1L;
-
 	public static String username;
 	private int port = 8989;
 	private Socket sock;
-	private Reader reader;
 	private Writer writer;
 	private Boolean isConnected = false;
 
@@ -65,9 +58,6 @@ public class ClientGUI {
 		southPanel = new JPanel();
 		centerPanel = new JPanel();
 
-		// Group group = new Group(null, null);
-		// String groupChat = group.groupChat(group.getRandomGroup());
-
 		ipLabel = new JLabel();
 		ipLabel.setText("Enter IP:");
 		northPanel.add(ipLabel);
@@ -93,27 +83,18 @@ public class ClientGUI {
 				if (isConnected == false) {
 					username = nameTextArea.getText();
 					nameTextArea.setEditable(false);
-					String ip  = "34.208.31.178";
+					String ip = "52.35.72.251";
 
 					try {
-						// this is what checks for an existing server
 						sock = new Socket(ip, port);
-						
+
 						oos = new ObjectOutputStream(sock.getOutputStream());
-						
+
 						oos.writeObject(MessageFactory.getLoginMessage(username));
-						
-						//InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
+
 						ois = new ObjectInputStream(sock.getInputStream());
 						oos.flush();
-						//reader = new BufferedReader(streamreader);
-						
-						//writer = new PrintWriter(sock.getOutputStream());
-						
-						//writer = (Writer) oos.writeObject(new LoginMessage(MessageFactory.getLoginMessage(username)));
-						//((PrintWriter) writer).println(username);
-						//oos.flush();
-						
+
 						isConnected = true;
 
 					} catch (Exception ex) {
@@ -121,7 +102,7 @@ public class ClientGUI {
 						ServerGUI server = new ServerGUI();
 						server.runServerWithGUI();
 					}
-					
+
 					Thread incomingReader = new Thread(new IncomingReader());
 					incomingReader.start();
 				} else if (isConnected == true) {
@@ -135,7 +116,6 @@ public class ClientGUI {
 		chatTextArea = new JTextArea(12, 30);
 		chatTextArea.setLineWrap(true);
 		chatTextArea.setEditable(false);
-		// chatTextArea.setText(groupChat);
 		chatScrollPane = new JScrollPane(chatTextArea);
 		chatScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		chatScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -161,6 +141,25 @@ public class ClientGUI {
 			}
 		});
 
+		replyTextArea.addKeyListener(new KeyListener() {
+
+			public void keyTyped(KeyEvent e) {
+			}
+
+			public void keyPressed(KeyEvent e) {
+
+				if ((e.getKeyCode() == KeyEvent.VK_ENTER && (e.isMetaDown()))) {
+					sendActionPerformed();
+				} else {
+
+				}
+
+			}
+
+			public void keyReleased(KeyEvent e) {
+			}
+		});
+
 		southPanel.add(replyScrollPane);
 		southPanel.add(sendButton);
 
@@ -180,10 +179,11 @@ public class ClientGUI {
 
 		} else {
 			try {
-				oos.writeObject(replyTextArea.getText());
+				oos.writeObject(MessageFactory.getChatMessage(replyTextArea.getText(), username));
+				//oos.writeObject(replyTextArea.getText());
 				oos.flush();
-				chatTextArea.setText(chatTextArea.getText() + replyTextArea.getText() + "\n");
-				
+				//chatTextArea.setText(chatTextArea.getText() + replyTextArea.getText() + "\n");
+
 			} catch (Exception ex) {
 				chatTextArea.append("Please enter IP and UserName to connect. \n");
 			}
@@ -202,8 +202,31 @@ public class ClientGUI {
 				while (sock.isConnected() && !sock.isClosed()) {
 
 					Message obj = (Message) ois.readObject();
-					System.out.println(obj.getType());
-					chatTextArea.append(obj.getType() + "\n");
+					Object type = obj.getType();
+
+					// switch statement would be better use
+
+					if (type.equals(MessageType.CHAT)) {
+						System.out.println(username + type.toString());
+						System.out.println(username + obj.hashCode());
+						chatTextArea.append(username + obj.toString() + "\n");
+
+					} else if (type.equals(MessageType.ACK)) {
+						System.out.println(obj.getType());
+						chatTextArea.append(obj.getType() + "\n");
+
+					} else if (type.equals(MessageType.DENY)) {
+						System.out.println(obj.getType());
+						chatTextArea.append(obj.getType() + "\n");
+					}
+
+					// MessageType type = input.getType();
+
+					// switch (type){
+					// case ACK:
+					// System.out.println("ACK");
+					// break;
+					// }
 
 				}
 			} catch (Exception ex) {
