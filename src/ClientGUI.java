@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -22,6 +23,7 @@ import blackjack.message.ChatMessage;
 import blackjack.message.Message;
 import blackjack.message.Message.MessageType;
 import blackjack.message.MessageFactory;
+import blackjack.message.GameStateMessage.GameAction;
 
 public class ClientGUI {
 	public static String username;
@@ -34,13 +36,12 @@ public class ClientGUI {
 	private JPanel northPanel;
 	private JPanel centerPanel;
 	private JPanel southPanel;
-	private JButton sendButton;
+	private JButton sendButton, startButton;
 	private JTextArea replyTextArea;
 	private JTextArea chatTextArea;
 	private JScrollPane replyScrollPane;
 	private JScrollPane chatScrollPane;
 	private JButton connectButton;
-	private JTextArea ipTextArea;
 	private JTextArea nameTextArea;
 	private JLabel ipLabel;
 	private JLabel nameLabel;
@@ -60,12 +61,19 @@ public class ClientGUI {
 		centerPanel = new JPanel();
 
 		ipLabel = new JLabel();
-		ipLabel.setText("Enter IP:");
+		ipLabel.setText("Click to:");
 		northPanel.add(ipLabel);
 
-		ipTextArea = new JTextArea(1, 8);
-		ipTextArea.setEditable(true);
-		northPanel.add(ipTextArea);
+		startButton = new JButton();
+		startButton.setText("Start");
+		startButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				startActionPerformed();
+			}
+		});
+		northPanel.add(startButton);
 
 		nameLabel = new JLabel();
 		nameLabel.setText("Enter UserName:");
@@ -108,6 +116,8 @@ public class ClientGUI {
 					incomingReader.start();
 				} else if (isConnected == true) {
 					chatTextArea.append("You are already connected. \n");
+					Thread incomingReader = new Thread(new IncomingReader());
+					incomingReader.start();
 				}
 
 			}
@@ -195,6 +205,18 @@ public class ClientGUI {
 		replyTextArea.requestFocus();
 	}
 
+	private void startActionPerformed(){
+		try {
+			oos.writeObject(MessageFactory.getStartMessage());
+			oos.flush();
+			
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		
+		
+	}
 	public class IncomingReader implements Runnable {
 
 		public void run() {
@@ -205,13 +227,15 @@ public class ClientGUI {
 					Message obj = (Message) ois.readObject();
 					String chat = (String) ois.readObject();
 					Object type = obj.getType();
+					Object message = obj.toString();					
 
 					// switch statement would be better use
 
 					if (type.equals(MessageType.CHAT)) {
 						System.out.println(username + type.toString());
 						System.out.println(username + obj.hashCode());
-						chatTextArea.append(username + chat.toString() + "\n");
+						System.out.println(username + "String " + chat);
+						chatTextArea.append(username + message + "\n");
 
 					} else if (type.equals(MessageType.ACK)) {
 						System.out.println(obj.getType());
@@ -220,15 +244,18 @@ public class ClientGUI {
 					} else if (type.equals(MessageType.DENY)) {
 						System.out.println(obj.getType());
 						chatTextArea.append(obj.getType() + "\n");
+						
+					} else if (type.equals(GameAction.START))
+					{
+						System.out.println(obj.getType());
+						chatTextArea.append(obj.getType() + "\n");
+						
+					} else if (type.equals(GameAction.JOIN))
+					{
+						System.out.println(obj.getType());
+						chatTextArea.append(obj.getType() + "\n");
+						
 					}
-
-					// MessageType type = input.getType();
-
-					// switch (type){
-					// case ACK:
-					// System.out.println("ACK");
-					// break;
-					// }
 
 				}
 			} catch (Exception ex) {
