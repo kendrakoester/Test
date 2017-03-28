@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 
+import blackjack.message.ChatMessage;
 import blackjack.message.Message;
 import blackjack.message.Message.MessageType;
 import blackjack.message.MessageFactory;
@@ -202,6 +203,7 @@ public class ClientGUI {
 				while (sock.isConnected() && !sock.isClosed()) {
 
 					Message obj = (Message) ois.readObject();
+					String chat = (String) ois.readObject();
 					Object type = obj.getType();
 
 					// switch statement would be better use
@@ -209,7 +211,7 @@ public class ClientGUI {
 					if (type.equals(MessageType.CHAT)) {
 						System.out.println(username + type.toString());
 						System.out.println(username + obj.hashCode());
-						chatTextArea.append(username + obj.toString() + "\n");
+						chatTextArea.append(username + chat.toString() + "\n");
 
 					} else if (type.equals(MessageType.ACK)) {
 						System.out.println(obj.getType());
